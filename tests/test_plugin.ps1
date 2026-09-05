@@ -59,19 +59,55 @@ foreach ($d in $skillDirs) {
     Assert "$($d.Name) frontmatter name matches the folder" ($name -eq $d.Name)
 }
 
-# A skill is only read when its description matches what the user is doing.
-# Deck and PDF guidance lives in document-formats, so both must be reachable.
-$docFmt  = Read-TextOrEmpty (Join-Path $Root 'skills/document-formats/SKILL.md')
-$docDesc = ([regex]::Match($docFmt, '(?ms)^description:\s*(.+?)$')).Groups[1].Value
-foreach ($topic in @('pptx', 'PDF')) {
-    Assert "the description mentions $topic" ($docDesc -match [regex]::Escape($topic))
+# Each rule must live in exactly one skill, and the skill that owns it must be
+# reachable. These check placement, not wording: a body assertion says the rule
+# is here, and its negative says the rule is not left behind somewhere else.
+$Bodies = @{}
+foreach ($d in $skillDirs) { $Bodies[$d.Name] = Read-TextOrEmpty (Join-Path $d.FullName 'SKILL.md') }
+function Body($name) { if ($Bodies.ContainsKey($name)) { return $Bodies[$name] } return '' }
+function Desc($name) { return ([regex]::Match((Body $name), '(?ms)^description:\s*(.+?)$')).Groups[1].Value }
+
+foreach ($n in @('common', 'hwp', 'pdf', 'pptx', 'xlsx', 'docx')) {
+    Assert "the $n skill ships" ($Bodies.ContainsKey($n))
 }
 
-# The Excel rule lives in this skill, so making a workbook must reach it too.
-Assert 'the description mentions xlsx' ($docDesc -match 'xlsx')
-Assert 'the body carries the Excel section' ($docFmt -match '(?m)^## 엑셀을 만들 때 항상 지킬 것')
-Assert 'the Excel rule fixes the font size at 11' ($docFmt -match 'size=11')
-Assert 'CSV meant for Excel is written with a BOM' ($docFmt -match 'utf-8-sig')
+# common owns encoding. Nothing else restates it.
+Assert 'common carries the encoding section' ((Body 'common') -match '(?m)^## 파이썬으로 파일을 열 때는 인코딩을 반드시 적는다')
+Assert 'common detects the encoding of incoming CSV' ((Body 'common') -match 'chardet')
+Assert 'common writes CSV meant for Excel with a BOM' ((Body 'common') -match 'utf-8-sig')
+Assert 'xlsx does not restate the CSV encoding rule' (-not ((Body 'xlsx') -match 'utf-8-sig'))
+
+# xlsx owns the cell font size.
+Assert 'xlsx fixes the cell font size at 11' ((Body 'xlsx') -match 'size=11')
+
+# hwp owns the conversion of formats Claude cannot read.
+Assert 'hwp drives the Hangul word processor' ((Body 'hwp') -match 'HWPFrame\.HwpObject')
+Assert 'hwp covers legacy Office files' ((Body 'hwp') -match '\.doc')
+
+# docx names the tools that exist on this PC.
+Assert 'docx builds with python-docx' ((Body 'docx') -match 'python-docx')
+Assert 'docx reads with markitdown' ((Body 'docx') -match 'markitdown')
+
+# pdf owns page selection and PDF output.
+Assert 'pdf prints through headless Edge' ((Body 'pdf') -match '--print-to-pdf')
+
+# pptx owns the Korean deck defaults.
+Assert 'pptx removes the glyph outline' ((Body 'pptx') -match 'fontFace|ln')
+
+# A skill is only read when its description matches what the user is doing, and
+# skills never chain on their own. Each format skill must name its official
+# counterpart in the description, and point at common in the body.
+foreach ($n in @('pdf', 'pptx', 'xlsx', 'docx')) {
+    Assert "$n names document-skills:$n in its description" ((Desc $n) -match [regex]::Escape("document-skills:$n"))
+}
+foreach ($n in @('hwp', 'pdf', 'pptx', 'xlsx', 'docx')) {
+    Assert "$n points at kw-doc-formats:common" ((Body $n) -match 'kw-doc-formats:common')
+}
+
+# The monolith is gone; no leftover may name it.
+foreach ($d in $skillDirs) {
+    Assert "$($d.Name) does not name the retired skill" (-not ((Body $d.Name) -match 'document-formats'))
+}
 
 Write-Host '--- claude plugin validate ---'
 # Exit code is the verdict. The tool prints warnings for a missing version and
