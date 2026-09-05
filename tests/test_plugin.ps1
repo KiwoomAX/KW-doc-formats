@@ -67,6 +67,12 @@ foreach ($topic in @('pptx', 'PDF')) {
     Assert "the description mentions $topic" ($docDesc -match [regex]::Escape($topic))
 }
 
+# The Excel rule lives in this skill, so making a workbook must reach it too.
+Assert 'the description mentions xlsx' ($docDesc -match 'xlsx')
+Assert 'the body carries the Excel section' ($docFmt -match '(?m)^## 엑셀을 만들 때 항상 지킬 것')
+Assert 'the Excel rule fixes the font size at 11' ($docFmt -match 'size=11')
+Assert 'CSV meant for Excel is written with a BOM' ($docFmt -match 'utf-8-sig')
+
 Write-Host '--- claude plugin validate ---'
 # Exit code is the verdict. The tool prints warnings for a missing version and
 # author and still exits 0; an error exits non-zero.
