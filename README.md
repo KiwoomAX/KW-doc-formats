@@ -18,11 +18,3 @@ claude plugin install kw-doc-formats@kw-doc-formats
 이 스킬은 kw_install이 깔아 주는 파이썬 3.12 라이브러리와 Poppler가 있는 PC를 전제한다. 라이브러리 목록의 정본은 kw_install 레포의 `requirements.txt`다. 이 레포는 그 목록을 다시 적지 않는다.
 
 스킬 본문에서 새 파이썬 모듈을 부르게 되면 kw_install의 `requirements.txt`도 손으로 맞춰야 한다. 두 레포 사이에는 자동 대조가 없다.
-
-## 검사
-
-```
-pwsh -NoProfile -ExecutionPolicy Bypass -File .\tests\test_plugin.ps1
-```
-
-매니페스트 이름과 설명의 일치, 스킬 frontmatter, `claude plugin validate`를 본다.

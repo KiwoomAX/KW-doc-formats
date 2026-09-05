@@ -36,7 +36,7 @@ $mkt    = Read-JsonOrNull $mktJson
 # two repos cannot drift without one of them failing.
 Assert "plugin.json name is $PluginName" ($plugin.name -eq $PluginName)
 Assert "marketplace name is $PluginName" ($mkt.name -eq $PluginName)
-Assert 'the marketplace lists exactly one plugin' (@($mkt.plugins).Count -eq 1)
+Assert 'the marketplace lists exactly one plugin' ($null -ne $mkt -and @($mkt.plugins).Count -eq 1)
 # Indexing $null (eg. $mkt.plugins[0] when marketplace.json is missing) is a
 # terminating error in PowerShell 7, so the first entry is resolved through a
 # guarded variable rather than indexed inline; a missing/empty list becomes a
