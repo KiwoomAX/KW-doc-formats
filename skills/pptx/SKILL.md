@@ -98,7 +98,22 @@ def koreanize_theme(src, dst, font="맑은 고딕"):
 고친 뒤 파워포인트가 실제로 그렇게 인식하는지 확인할 수 있다. COM 으로 물어보면 된다.
 
 ```powershell
-$deck.SlideMaster.Theme.ThemeFontScheme.MinorFont.Item(1).Name   # 맑은 고딕 이어야 한다
+# 파워포인트가 떠 있으면 실행하지 않는다. 아래 Quit 이 열어 둔 발표자료까지 닫는다.
+# 왜 그런지는 kw-doc-formats:common 의 「오피스 프로그램을 COM 으로 부를 때」에 있다.
+if (@(Get-Process POWERPNT -ErrorAction SilentlyContinue).Count -gt 0) {
+    throw "파워포인트가 실행 중입니다. 닫아 달라고 요청한 뒤에 다시 실행하십시오."
+}
+
+$ppt  = New-Object -ComObject PowerPoint.Application
+$deck = $null
+try {
+    $deck = $ppt.Presentations.Open($path, $true, $false, $false)    # 읽기 전용, 창 없이
+    $deck.SlideMaster.Theme.ThemeFontScheme.MinorFont.Item(1).Name   # 맑은 고딕 이어야 한다
+} finally {
+    if ($deck) { $deck.Close() }
+    $ppt.Quit()                     # 위 검사를 통과했으므로 내가 띄운 인스턴스다
+    [Runtime.InteropServices.Marshal]::ReleaseComObject($ppt) | Out-Null
+}
 ```
 
 ### 맞출 수 없는 차이 하나 — `lang` 속성

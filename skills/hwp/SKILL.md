@@ -23,6 +23,12 @@ description: 한글 파일(.hwp, .hwpx)이나 구형 오피스 파일(.doc, .ppt
 $src = 'C:\...\문서.hwp'
 $out = 'C:\...\문서.pdf'
 
+# 한/글이 이미 떠 있으면 실행하지 않는다. 아래 Quit 이 담당자가 열어 둔 문서까지 닫는다.
+# 왜 그런지는 kw-doc-formats:common 의 「오피스 프로그램을 COM 으로 부를 때」에 있다.
+if (@(Get-Process Hwp -ErrorAction SilentlyContinue).Count -gt 0) {
+    throw "한/글이 실행 중입니다. 닫아 달라고 요청한 뒤에 다시 실행하십시오."
+}
+
 $h = New-Object -ComObject HWPFrame.HwpObject
 $h.RegisterModule("FilePathCheckDLL", "FilePathCheckerModule") | Out-Null
 $h.Open($src, "HWP", "forceopen:true") | Out-Null
