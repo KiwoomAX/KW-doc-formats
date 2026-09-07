@@ -32,8 +32,12 @@ Assert 'marketplace.json exists' (Test-Path $mktJson)
 $plugin = Read-JsonOrNull $pluginJson
 $mkt    = Read-JsonOrNull $mktJson
 
-# kw_install writes this string into $script:Plugins; it is pinned here so the
-# two repos cannot drift without one of them failing.
+# This pin used to be justified by kw_install holding the same string in
+# $script:Plugins. That table is gone: the installer was thinned on 2026-09-06
+# and the list moved into kw-control-tower, so no other repo has failed on this
+# for some time. The live cross-check now sits beside the plugin itself, in
+# kw-plugins/tests/test_doc_formats.ps1, where the id and the list that requires
+# it are in one repo. What is left here only pins this frozen copy against itself.
 Assert "plugin.json name is $PluginName" ($plugin.name -eq $PluginName)
 Assert "marketplace name is $PluginName" ($mkt.name -eq $PluginName)
 Assert 'the marketplace lists exactly one plugin' ($null -ne $mkt -and @($mkt.plugins).Count -eq 1)
