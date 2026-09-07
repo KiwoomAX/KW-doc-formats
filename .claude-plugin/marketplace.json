@@ -1,5 +1,5 @@
 {
-  "$schema": "https://json.schemastore.org/claude-code-plugin-marketplace.json",
+  "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
   "name": "kw-doc-formats",
   "description": "KiwoomAX의 문서 형식 처리 플러그인 마켓플레이스.",
   "owner": { "name": "KiwoomAX" },
